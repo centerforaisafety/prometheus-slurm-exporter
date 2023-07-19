@@ -16,13 +16,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package main
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"log"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 /*
@@ -49,7 +50,7 @@ type SchedulerMetrics struct {
 
 // Execute the sdiag command and return its output
 func SchedulerData() []byte {
-	cmd := exec.Command("sdiag")
+	cmd := exec.Command("sudo", "sdiag")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)

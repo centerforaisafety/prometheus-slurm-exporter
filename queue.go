@@ -16,11 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package main
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"log"
 	"os/exec"
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type QueueMetrics struct {
@@ -84,7 +85,7 @@ func ParseQueueMetrics(input []byte) *QueueMetrics {
 
 // Execute the squeue command and return its output
 func QueueData() []byte {
-	cmd := exec.Command("squeue", "-a", "-r", "-h", "-o %A,%T,%r", "--states=all")
+	cmd := exec.Command("sudo", "squeue", "-a", "-r", "-h", "-o %A,%T,%r", "--states=all")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
