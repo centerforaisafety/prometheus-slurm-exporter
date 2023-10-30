@@ -18,6 +18,7 @@ package main
 import (
 	"io/ioutil"
 	"path/filepath"
+	"os"
 	"strings"
 	"testing"
 )
@@ -66,8 +67,12 @@ func TestGPUsGetMetrics(t *testing.T) {
 }
 
 func TestUserGPUsDCGM(t *testing.T) {
-	userGPUs := ParseUserGPUsDCGM()
-	t.Logf("User GPUs DCGM: %v", userGPUs)
+	if os.Getenv("RUN_DCGM_TESTS") == "1" {
+		userGPUs := ParseUserGPUsDCGM()
+		t.Logf("User GPUs DCGM: %v", userGPUs)
+	} else {
+		t.Skip("Skipping DCGM tests")
+	}
 }
 
 func TestUserGPUsSLURM(t *testing.T) {
