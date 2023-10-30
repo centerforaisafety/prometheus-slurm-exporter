@@ -67,6 +67,5 @@ jobs:
           /home/runner/bin/oci artifacts generic artifact upload-by-path \
             --repository-id ocid1.artifactrepository.oc1.us-sanjose-1.0.amaaaaaa2m3huzqayy3wpbwafgbtjlv4uf4bq7ztdu4p6tb52baua5fs66ra \
             --artifact-path prometheus-slurm-exporter \
-            --artifact-version v1.0 \
+            --artifact-version ${{ github.sha[:7] }} \
             --content-body ./bin/prometheus-slurm-exporter
-    
