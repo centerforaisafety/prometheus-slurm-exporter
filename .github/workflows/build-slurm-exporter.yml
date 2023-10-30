@@ -62,10 +62,15 @@ jobs:
           echo -e "[DEFAULT]\nuser=${{ env.OCI_CLI_USER }}\nfingerprint=${{ env.OCI_CLI_FINGERPRINT }}\nkey_file=/tmp/oci_private.pem\nregion=${{ env.OCI_CLI_REGION }}\ntenancy=${{ env.OCI_CLI_TENANCY }}" > ~/.oci/config
           cat ~/.oci/config
           
+          - name: Get short git ref
+          run: echo "SHORT_GIT_REF=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+  
       - name: Upload Binary to OCI Artifacts
         run: |
           /home/runner/bin/oci artifacts generic artifact upload-by-path \
             --repository-id ocid1.artifactrepository.oc1.us-sanjose-1.0.amaaaaaa2m3huzqayy3wpbwafgbtjlv4uf4bq7ztdu4p6tb52baua5fs66ra \
             --artifact-path prometheus-slurm-exporter \
-            --artifact-version ${{ github.sha[:7] }} \
+            --artifact-version $SHORT_GIT_REF \
             --content-body ./bin/prometheus-slurm-exporter
+        env:
+          SHORT_GIT_REF: ${{ env.SHORT_GIT_REF }}
