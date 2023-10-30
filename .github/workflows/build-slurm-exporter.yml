@@ -62,8 +62,8 @@ jobs:
           echo -e "[DEFAULT]\nuser=${{ env.OCI_CLI_USER }}\nfingerprint=${{ env.OCI_CLI_FINGERPRINT }}\nkey_file=/tmp/oci_private.pem\nregion=${{ env.OCI_CLI_REGION }}\ntenancy=${{ env.OCI_CLI_TENANCY }}" > ~/.oci/config
           cat ~/.oci/config
           
-          - name: Get short git ref
-          run: echo "SHORT_GIT_REF=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+      - name: Get short git ref
+        run: echo "SHORT_GIT_REF=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
   
       - name: Upload Binary to OCI Artifacts
         run: |
