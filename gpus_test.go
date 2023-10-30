@@ -61,8 +61,9 @@ func TestGPUsGetMetrics(t *testing.T) {
 	t.Logf("Other GPUs: %v", metrics.other)
 	t.Logf("Total GPUs: %v", metrics.total)
 	t.Logf("Utilization: %v", metrics.utilization)
-	t.Logf("User GPUs DCGM: %v", metrics.UserGPUsDCGM)
+/*	t.Logf("User GPUs DCGM: %v", metrics.UserGPUsDCGM)
 	t.Logf("User GPUs SLURM: %v", metrics.UserGPUsSLURM)
+*/
 }
 /*
 func TestUserGPUsDCGM(t *testing.T) {
