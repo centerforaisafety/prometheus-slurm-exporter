@@ -18,7 +18,6 @@ package main
 import (
 	"io/ioutil"
 	"path/filepath"
-	"os"
 	"strings"
 	"testing"
 )
