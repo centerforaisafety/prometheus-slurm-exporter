@@ -53,30 +53,3 @@ func TestGPUsMetrics(t *testing.T) {
 		t.Logf("Total GPUs: %v", totalGPUs)
 	}
 }
-/*
-func TestGPUsGetMetrics(t *testing.T) {
-	metrics := GPUsGetMetrics()
-	t.Logf("Allocated GPUs: %v", metrics.alloc)
-	t.Logf("Idle GPUs: %v", metrics.idle)
-	t.Logf("Other GPUs: %v", metrics.other)
-	t.Logf("Total GPUs: %v", metrics.total)
-	t.Logf("Utilization: %v", metrics.utilization)
-	t.Logf("User GPUs DCGM: %v", metrics.UserGPUsDCGM)
-	t.Logf("User GPUs SLURM: %v", metrics.UserGPUsSLURM)
-
-}
-
-func TestUserGPUsDCGM(t *testing.T) {
-	if os.Getenv("RUN_DCGM_TESTS") == "1" {
-		userGPUs := ParseUserGPUsDCGM()
-		t.Logf("User GPUs DCGM: %v", userGPUs)
-	} else {
-		t.Skip("Skipping DCGM tests")
-	}
-}
-
-func TestUserGPUsSLURM(t *testing.T) {
-	userGPUs := ParseUserGPUsSLURM()
-	t.Logf("User GPUs SLURM: %v", userGPUs)
-}
-*/

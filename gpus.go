@@ -1,4 +1,4 @@
-/* Copyright 2022 Iztok Lebar Bajec
+/* Copyright 2022 Joeri Hermans, Victor Penso, Matteo Dessalvi, Iztok Lebar Bajec
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,13 +26,11 @@ import (
 )
 
 type GPUsMetrics struct {
-	alloc         float64
-	idle          float64
-	other         float64
-	total         float64
-	utilization   float64
-	UserGPUsDCGM  map[string]float64
-	UserGPUsSLURM map[string]float64
+	alloc       float64
+	idle        float64
+	other       float64
+	total       float64
+	utilization float64
 }
 
 func GPUsGetMetrics() *GPUsMetrics {
@@ -69,10 +67,13 @@ func ParseAllocatedGPUs(data []byte) float64 {
 	// sinfo -a -h --Format="Nodes: ,GresUsed:" --state=allocated
 	// 3 gpu:2                                       # slurm>=20.11.8
 	// 1 gpu:(null):3(IDX:0-7)                       # slurm 21.08.5
-	// 13 gpu:A30:4(IDX:0-3),gpu:Q6K:4(IDX:0-3)      # slurm 21.08.5	sinfo_lines := string(data)
+	// 13 gpu:A30:4(IDX:0-3),gpu:Q6K:4(IDX:0-3)      # slurm 21.08.5
+
+	sinfo_lines := string(data)
 	re := regexp.MustCompile(`gpu:(\(null\)|[^:(]*):?([0-9]+)(\([^)]*\))?`)
-	if len(data) > 0 {
-		for _, line := range strings.Split(string(data), "\n") {
+	if len(sinfo_lines) > 0 {
+		for _, line := range strings.Split(sinfo_lines, "\n") {
+			// log.info(line)
 			if len(line) > 0 && strings.Contains(line, "gpu:") {
 				nodes := strings.Fields(line)[0]
 				num_nodes, _ := strconv.ParseFloat(nodes, 64)
@@ -89,6 +90,7 @@ func ParseAllocatedGPUs(data []byte) float64 {
 			}
 		}
 	}
+
 	return num_gpus
 }
 
@@ -97,10 +99,13 @@ func ParseIdleGPUs(data []byte) float64 {
 	// sinfo -a -h --Format="Nodes: ,Gres: ,GresUsed:" --state=idle,allocated
 	// 3 gpu:4 gpu:2                                       																# slurm 20.11.8
 	// 1 gpu:8(S:0-1) gpu:(null):3(IDX:0-7)                       												# slurm 21.08.5
-	// 13 gpu:A30:4(S:0-1),gpu:Q6K:40(S:0-1) gpu:A30:4(IDX:0-3),gpu:Q6K:4(IDX:0-3)	sinfo_lines := string(data)
+	// 13 gpu:A30:4(S:0-1),gpu:Q6K:40(S:0-1) gpu:A30:4(IDX:0-3),gpu:Q6K:4(IDX:0-3)       	# slurm 21.08.5
+
+	sinfo_lines := string(data)
 	re := regexp.MustCompile(`gpu:(\(null\)|[^:(]*):?([0-9]+)(\([^)]*\))?`)
-	if len(data) > 0 {
-		for _, line := range strings.Split(string(data), "\n") {
+	if len(sinfo_lines) > 0 {
+		for _, line := range strings.Split(sinfo_lines, "\n") {
+			// log.info(line)
 			if len(line) > 0 && strings.Contains(line, "gpu:") {
 				nodes := strings.Fields(line)[0]
 				num_nodes, _ := strconv.ParseFloat(nodes, 64)
@@ -126,6 +131,7 @@ func ParseIdleGPUs(data []byte) float64 {
 			}
 		}
 	}
+
 	return num_gpus
 }
 
@@ -135,9 +141,12 @@ func ParseTotalGPUs(data []byte) float64 {
 	// 3 gpu:4                                       	# slurm 20.11.8
 	// 1 gpu:8(S:0-1)                                	# slurm 21.08.5
 	// 13 gpu:A30:4(S:0-1),gpu:Q6K:40(S:0-1)        	# slurm 21.08.5
+
+	sinfo_lines := string(data)
 	re := regexp.MustCompile(`gpu:(\(null\)|[^:(]*):?([0-9]+)(\([^)]*\))?`)
-	if len(data) > 0 {
-		for _, line := range strings.Split(string(data), "\n") {
+	if len(sinfo_lines) > 0 {
+		for _, line := range strings.Split(sinfo_lines, "\n") {
+			// log.Info(line)
 			if len(line) > 0 && strings.Contains(line, "gpu:") {
 				nodes := strings.Fields(line)[0]
 				num_nodes, _ := strconv.ParseFloat(nodes, 64)
@@ -154,6 +163,7 @@ func ParseTotalGPUs(data []byte) float64 {
 			}
 		}
 	}
+
 	return num_gpus
 }
 
@@ -168,8 +178,6 @@ func ParseGPUsMetrics() *GPUsMetrics {
 	gm.other = other_gpus
 	gm.total = total_gpus
 	gm.utilization = allocated_gpus / total_gpus
-	gm.UserGPUsDCGM = ParseUserGPUsDCGM()
-	gm.UserGPUsSLURM = ParseUserGPUsSLURM()
 	return &gm
 }
 
@@ -188,6 +196,7 @@ func TotalGPUsData() []byte {
 	return Execute("sinfo", args)
 }
 
+// Execute the sinfo command and return its output
 func Execute(command string, arguments []string) []byte {
 	cmd := exec.Command(command, arguments...)
 	out, err := cmd.CombinedOutput()
@@ -203,106 +212,37 @@ func Execute(command string, arguments []string) []byte {
  * https://godoc.org/github.com/prometheus/client_golang/prometheus#Collector
  */
 
- func ParseUserGPUsDCGM() map[string]float64 {
-    userGPUs := make(map[string]float64)
-    
-    // Execute a command to get GPU usage information
-    cmd := exec.Command("dcgmi", "dmon", "-c", "1", "-e", "203")
-    out, err := cmd.CombinedOutput()
-    if err != nil {
-        log.Fatalf("Failed to execute dcgmi command: %v", err)
-    }
-    
-    // Parse the command output
-    lines := strings.Split(string(out), "\n")
-    for _, line := range lines {
-        fields := strings.Fields(line)
-        if len(fields) >= 3 && fields[0] != "#" {
-            user := fields[1]
-            gpuUsage, err := strconv.ParseFloat(fields[2], 64)
-            if err != nil {
-                log.Errorf("Failed to parse GPU usage for user %s: %v", user, err)
-                continue
-            }
-            userGPUs[user] = gpuUsage
-        }
-    }
-    
-    return userGPUs
-}
-
-
-func ParseUserGPUsSLURM() map[string]float64 {
-    userGPUs := make(map[string]float64)
-    
-    // Execute a command to get GPU usage information
-    cmd := exec.Command("sacct", "-P", "--format=User,GresUsed", "-a")
-    out, err := cmd.CombinedOutput()
-    if err != nil {
-        log.Fatalf("Failed to execute sacct command: %v", err)
-    }
-    
-    // Parse the command output
-    lines := strings.Split(string(out), "\n")
-    for _, line := range lines {
-        fields := strings.Split(line, "|")
-        if len(fields) >= 2 {
-            user := fields[0]
-            gpuUsage, err := strconv.ParseFloat(fields[1], 64)
-            if err != nil {
-                log.Errorf("Failed to parse GPU usage for user %s: %v", user, err)
-                continue
-            }
-            userGPUs[user] = gpuUsage
-        }
-    }
-    
-    return userGPUs
+func NewGPUsCollector() *GPUsCollector {
+	return &GPUsCollector{
+		alloc:       prometheus.NewDesc("slurm_gpus_alloc", "Allocated GPUs", nil, nil),
+		idle:        prometheus.NewDesc("slurm_gpus_idle", "Idle GPUs", nil, nil),
+		other:       prometheus.NewDesc("slurm_gpus_other", "Other GPUs", nil, nil),
+		total:       prometheus.NewDesc("slurm_gpus_total", "Total GPUs", nil, nil),
+		utilization: prometheus.NewDesc("slurm_gpus_utilization", "Total GPU utilization", nil, nil),
+	}
 }
 
 type GPUsCollector struct {
-    alloc       *prometheus.Desc
-    idle        *prometheus.Desc
-    other       *prometheus.Desc
-    total       *prometheus.Desc
-    utilization *prometheus.Desc
-    userGPUsDCGM *prometheus.Desc
-    userGPUsSLURM *prometheus.Desc
+	alloc       *prometheus.Desc
+	idle        *prometheus.Desc
+	other       *prometheus.Desc
+	total       *prometheus.Desc
+	utilization *prometheus.Desc
 }
 
-func NewGPUsCollector() *GPUsCollector {
-    return &GPUsCollector{
-        alloc:       prometheus.NewDesc("slurm_gpus_alloc", "Allocated GPUs", nil, nil),
-        idle:        prometheus.NewDesc("slurm_gpus_idle", "Idle GPUs", nil, nil),
-        other:       prometheus.NewDesc("slurm_gpus_other", "Other GPUs", nil, nil),
-        total:       prometheus.NewDesc("slurm_gpus_total", "Total GPUs", nil, nil),
-        utilization: prometheus.NewDesc("slurm_gpus_utilization", "Total GPU utilization", nil, nil),
-        userGPUsDCGM: prometheus.NewDesc("slurm_user_gpus_dcgm", "Number of GPUs used per user over time, obtained using DCGM and Linux tools", []string{"user"}, nil),
-        userGPUsSLURM: prometheus.NewDesc("slurm_user_gpus_slurm", "Number of GPUs used per user over time, obtained using SLURM commands", []string{"user"}, nil),
-    }
-}
-
+// Send all metric descriptions
 func (cc *GPUsCollector) Describe(ch chan<- *prometheus.Desc) {
-    ch <- cc.alloc
-    ch <- cc.idle
-    ch <- cc.other
-    ch <- cc.total
-    ch <- cc.utilization
-    ch <- cc.userGPUsDCGM
-    ch <- cc.userGPUsSLURM
+	ch <- cc.alloc
+	ch <- cc.idle
+	ch <- cc.other
+	ch <- cc.total
+	ch <- cc.utilization
 }
-
 func (cc *GPUsCollector) Collect(ch chan<- prometheus.Metric) {
-    cm := GPUsGetMetrics()
-    ch <- prometheus.MustNewConstMetric(cc.alloc, prometheus.GaugeValue, cm.alloc)
-    ch <- prometheus.MustNewConstMetric(cc.idle, prometheus.GaugeValue, cm.idle)
-    ch <- prometheus.MustNewConstMetric(cc.other, prometheus.GaugeValue, cm.other)
-    ch <- prometheus.MustNewConstMetric(cc.total, prometheus.GaugeValue, cm.total)
-    ch <- prometheus.MustNewConstMetric(cc.utilization, prometheus.GaugeValue, cm.utilization)
-    for user, gpus := range cm.UserGPUsDCGM {
-        ch <- prometheus.MustNewConstMetric(cc.userGPUsDCGM, prometheus.GaugeValue, gpus, user)
-    }
-    for user, gpus := range cm.UserGPUsSLURM {
-        ch <- prometheus.MustNewConstMetric(cc.userGPUsSLURM, prometheus.GaugeValue, gpus, user)
-    }
+	cm := GPUsGetMetrics()
+	ch <- prometheus.MustNewConstMetric(cc.alloc, prometheus.GaugeValue, cm.alloc)
+	ch <- prometheus.MustNewConstMetric(cc.idle, prometheus.GaugeValue, cm.idle)
+	ch <- prometheus.MustNewConstMetric(cc.other, prometheus.GaugeValue, cm.other)
+	ch <- prometheus.MustNewConstMetric(cc.total, prometheus.GaugeValue, cm.total)
+	ch <- prometheus.MustNewConstMetric(cc.utilization, prometheus.GaugeValue, cm.utilization)
 }
