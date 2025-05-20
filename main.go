@@ -51,7 +51,8 @@ func main() {
 
 	// Turn on GPUs accounting only if the corresponding command line option is set to true.
 	if *gpuAcct {
-		prometheus.MustRegister(NewGPUsCollector())   // from gpus.go
+		prometheus.MustRegister(NewGPUsCollector())          // from gpus.go
+		prometheus.MustRegister(NewPartitionGPUsCollector()) // from partition_gpus.go
 	}
 
 	// The Handler function provides a default handler to expose metrics
