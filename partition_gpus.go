@@ -237,7 +237,6 @@ func (pgc *PartitionGPUsCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect is called by the Prometheus registry when collecting metrics.
 func (pgc *PartitionGPUsCollector) Collect(ch chan<- prometheus.Metric) {
 	partitionMetrics := GetPartitionGPUMetrics()
-	fmt.Println(partitionMetrics)
 	for partitionName, data := range partitionMetrics {
 		// Only send metrics if there's some GPU activity or configuration.
 		if data.total > 0 || data.allocated > 0 {
