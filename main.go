@@ -54,6 +54,7 @@ func main() {
 		prometheus.MustRegister(NewGPUsCollector())          // from gpus.go
 		prometheus.MustRegister(NewPartitionGPUsCollector()) // from partition_gpus.go
 		prometheus.MustRegister(NewUserGPUsCollector())      // from user_gpus.go
+		prometheus.MustRegister(NewAccountGPUsCollector())   // from account_gpus.go
 	}
 
 	// The Handler function provides a default handler to expose metrics
