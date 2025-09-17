@@ -67,7 +67,11 @@ func ParseAccountsMetrics(input []byte) map[string]*JobMetrics {
                         gres := strings.Split(line, "|")[4]
                         var gpus float64 = 0
                         if gres != "N/A" {
-                                gpus, _ = strconv.ParseFloat(gres[9:], 64)
+                                //gpus, _ = strconv.ParseFloat(gres[9:], 64)
+				//gres can be of the format gres/gpu:a100:4 in our case
+				colonPosition := strings.LastIndex(gres, ":")
+				numGpu := strings.TrimSpace(gres[colonPosition+1:])
+				gpus, _ = strconv.ParseFloat(numGpu, 64)
                         }
 
                         pending := regexp.MustCompile(`^pending`)
